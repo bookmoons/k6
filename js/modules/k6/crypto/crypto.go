@@ -39,7 +39,11 @@ import (
 	"github.com/loadimpact/k6/js/common"
 )
 
-type Crypto struct{}
+type X509 struct{}
+
+type Crypto struct{
+	X509 X509
+}
 
 type Hasher struct {
 	ctx context.Context
@@ -222,3 +226,5 @@ func (c *Crypto) Hmac(
 	hasher.Update(input)
 	return hasher.Digest(outputEncoding)
 }
+
+func (X509) Parse(ctx context.Context, encoded string) {}

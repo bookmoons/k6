@@ -408,6 +408,22 @@ func TestHMac(t *testing.T) {
 	}
 }
 
+func TestX509(t *testing.T) {
+	rt := goja.New()
+	rt.SetFieldNameMapper(common.FieldNameMapper{})
+	ctx := context.Background()
+	ctx = common.WithRuntime(ctx, rt)
+	rt.Set("crypto", common.Bind(rt, New(), &ctx))
+
+	t.Run("ParseSuccess", func(t *testing.T) {
+		_, err := common.RunString(rt, `
+		const pem = "pem-encoded-certificate";
+		const certificate = crypto.x509.parse(pem);
+		`)
+		assert.NoError(t, err)
+	})
+}
+
 func TestAWSv4(t *testing.T) {
 	// example values from https://docs.aws.amazon.com/general/latest/gr/signature-v4-examples.html
 	rt := goja.New()
