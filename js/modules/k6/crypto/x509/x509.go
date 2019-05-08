@@ -86,6 +86,12 @@ type PublicKey struct {
 	Key       interface{}
 }
 
+// PublicKey is used for decryption and signature verification
+type PublicKey struct {
+	Type string
+	RSA  *rsa.PublicKey `js:"rsa"`
+}
+
 // New constructs the X509 interface
 func New() *X509 {
 	return &X509{}
@@ -129,6 +135,19 @@ func (X509) GetSubject(ctx context.Context, encoded string) Subject {
 		throw(ctx, err)
 	}
 	return makeSubject(parsed.Subject)
+}
+
+// ParsePublicKey parses a public key
+func (X509) ParsePublicKey(ctx context.Context, encoded string) PublicKey {
+	parsed, err := parsePublicKey(ctx, encoded)
+	if err != nil {
+		throw(ctx, err)
+	}
+	constructed, err := makePublicKey(ctx, parsed)
+	if err != nil {
+		throw(ctx, err)
+	}
+	return constructed
 }
 
 func parseCertificate(encoded string) (*x509.Certificate, error) {
@@ -267,6 +286,20 @@ func signatureAlgorithm(value x509.SignatureAlgorithm) string {
 func fingerPrint(parsed *x509.Certificate) []byte {
 	bytes := sha1.Sum(parsed.Raw) // #nosec G401
 	return bytes[:]
+}
+
+func parsePublicKey(encoded string) (interface{}, err) {
+	decoded, _ := pem.Decode([]byte(encoded))
+	if decoded == nil {
+		err := errors.New("failed to decode public key PEM file")
+		return nil, err
+	}
+	parsed, err := x509.ParsePKIXPublicKey(decoded.Bytes)
+	if err != nil {
+		err = errors.Wrap(err, "failed to parse public key")
+		return nil, err
+	}
+	return parsed, nil
 }
 
 func throw(ctx context.Context, err error) {
