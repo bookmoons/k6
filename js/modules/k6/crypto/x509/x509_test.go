@@ -41,10 +41,13 @@ func makeRuntime() *goja.Runtime {
 }
 
 type Material struct {
-	dsaCertificate   string
-	ecdsaCertificate string
-	rsaCertificate   string
-	publicKey        string
+	dsaCertificate         string
+	ecdsaCertificate       string
+	rsaCertificate         string
+	rsPublicKey            string
+	privateKeyPassword     string
+	rsaPrivateKeyClear     string
+	rsaPrivateKeyEncrypted string
 }
 
 var material = Material{ //nolint:gochecknoglobals
@@ -131,30 +134,14 @@ gzg3dNaCY65aH0cJE/dVwiS/F2XTr1zvr+uBPExgrA21+FSIlHM0Dot+VGKdCLEO
 xytSVXVn+cECQLg9hVn+Zx3XO2FA0eOzaWEONnUGghT/Ivw06lUxis5tkAoAU93d
 ddBqJe0XUeAX8Zr6EJ82
 -----END CERTIFICATE-----`),
-	publicKey: template(`-----BEGIN PUBLIC KEY-----
+	rsaPublicKey: template(`-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDXMLr/Y/vUtIFY75jj0YXfp6lQ
 7iEIbps3BvRE4isTpxs8fXLnLM8LAuJScxiKyrGnj8EMb7LIHkSMBlz6iVj9atY6
 EUEm/VHUnElNquzGyBA50TCfpv6NHPaTvOoB45yQbZ/YB4LO+CsT9eIMDZ4tcU9Z
 +xD10ifJhhIwpZUFIQIDAQAB
 -----END PUBLIC KEY-----`),
-}
-
-func template(value string) string {
-	return fmt.Sprintf("`%s`", value)
-}
-
-func rsaPublicKey() string {
-	pem := `-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDXMLr/Y/vUtIFY75jj0YXfp6lQ
-7iEIbps3BvRE4isTpxs8fXLnLM8LAuJScxiKyrGnj8EMb7LIHkSMBlz6iVj9atY6
-EUEm/VHUnElNquzGyBA50TCfpv6NHPaTvOoB45yQbZ/YB4LO+CsT9eIMDZ4tcU9Z
-+xD10ifJhhIwpZUFIQIDAQAB
------END PUBLIC KEY-----`
-	return template(pem)
-}
-
-func rsaPrivateKeyClear() string {
-	pem := `-----BEGIN RSA PRIVATE KEY-----
+	privateKeyPassword: fmt.Sprintf(`"%s"`, "1234"),
+	rsaPrivateKeyClear: template(`-----BEGIN RSA PRIVATE KEY-----
 MIICXgIBAAKBgQDXMLr/Y/vUtIFY75jj0YXfp6lQ7iEIbps3BvRE4isTpxs8fXLn
 LM8LAuJScxiKyrGnj8EMb7LIHkSMBlz6iVj9atY6EUEm/VHUnElNquzGyBA50TCf
 pv6NHPaTvOoB45yQbZ/YB4LO+CsT9eIMDZ4tcU9Z+xD10ifJhhIwpZUFIQIDAQAB
@@ -168,12 +155,8 @@ A/xcn5uz+ingfoCnGpsEhZRfbcLVrmpUaVb6BANVrmYBdim6osHkj1yBRHECQQCG
 5pp8cejiX9NIW7dYHRIuzdjF3nmONe6urRhb/TxXFpbd+WTESJPpoCo4uib/MBQ+
 eml4CZD2OGaxUqdOSHKBAkEAtruFjS0IhJstjoOrAS1p5ZAr8Noj5L1DEIgxfAD4
 8RbNsyVGZX59oURQ/NqyEs+ME4o/oXuoz8yVBdQqT8G93w==
------END RSA PRIVATE KEY-----`
-	return template(pem)
-}
-
-func rsaPrivateKeyEncrypted() string {
-	pem := `-----BEGIN RSA PRIVATE KEY-----
+-----END RSA PRIVATE KEY-----`),
+	rsaPrivateKeyEncrypted: template(`-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: DES-EDE3-CBC,5E7604C0869B553B
 
@@ -190,13 +173,7 @@ uKDa1E7zDOjKPTPDqcHfBVNILG5QNtb3DzK1ZWi4OHDFQnOtfdGbGFQU7evCLNQ3
 HDq+PO4x/ZAd+pdw6xxjG4e5QjQ0sjx7bqJPz3Z9cTtOOBmNyg7CAvcmoxfa9YHj
 DoCf4YtejwsH+o7I7FUAA0WAZ3w7NTSe1OHLhHoFEO6SIAuyYwCmSKolY7twbNKX
 p63k5DyefbWqosnWi+B8VkrZGr33OApBwMaS5yQzVyDg98f78pldQA==
------END RSA PRIVATE KEY-----`
-	return template(pem)
-}
-
-func privateKeyPassword() string {
-	value := "1234"
-	return fmt.Sprintf("\"%s\"", value)
+-----END RSA PRIVATE KEY-----`),
 }
 
 func template(value string) string {
@@ -219,7 +196,7 @@ func TestParse(t *testing.T) {
 	t.Run("ParseFailure", func(t *testing.T) {
 		_, err := common.RunString(rt, fmt.Sprintf(`
 		const pem = %s;
-		x509.parse(pem);`, material.publicKey))
+		x509.parse(pem);`, material.rsaPublicKey))
 		if assert.Error(t, err) {
 			assert.True(t, strings.HasPrefix(
 				err.Error(),
@@ -741,7 +718,6 @@ func TestParsePublicKey(t *testing.T) {
 		return
 	}
 	rt := makeRuntime()
-	rsa := rsaPublicKey()
 
 	t.Run("Failure", func(t *testing.T) {
 		_, err := common.RunString(rt, `
@@ -760,7 +736,7 @@ func TestParsePublicKey(t *testing.T) {
 			typeof publicKey.rsa.n === "object"
 		)) {
 			throw new Error("Bad result");
-		}`, rsa))
+		}`, material.rsaPublicKey))
 		assert.NoError(t, err)
 	})
 }
@@ -770,9 +746,6 @@ func TestParsePrivateKey(t *testing.T) {
 		return
 	}
 	rt := makeRuntime()
-	password := privateKeyPassword()
-	rsaClear := rsaPrivateKeyClear()
-	rsaEncrypted := rsaPrivateKeyEncrypted()
 
 	t.Run("Failure", func(t *testing.T) {
 		_, err := common.RunString(rt, `
@@ -791,7 +764,7 @@ func TestParsePrivateKey(t *testing.T) {
 			typeof privateKey.rsa.primes === "object"
 		)) {
 			throw new Error("Bad result");
-		}`, rsaClear))
+		}`, material.rsaPrivateKeyClear))
 		assert.NoError(t, err)
 	})
 
@@ -807,7 +780,7 @@ func TestParsePrivateKey(t *testing.T) {
 			typeof privateKey.rsa.primes === "object"
 		)) {
 			throw new Error("Bad result");
-		}`, rsaEncrypted, password))
+		}`, material.rsaPrivateKeyEncrypted, material.privateKeyPassword))
 		assert.NoError(t, err)
 	})
 }
