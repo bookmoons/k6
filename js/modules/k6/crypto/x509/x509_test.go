@@ -143,7 +143,7 @@ func template(value string) string {
 	return fmt.Sprintf("`%s`", value)
 }
 
-func testRsaPublicKey() string {
+func rsaPublicKey() string {
 	pem := `-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDXMLr/Y/vUtIFY75jj0YXfp6lQ
 7iEIbps3BvRE4isTpxs8fXLnLM8LAuJScxiKyrGnj8EMb7LIHkSMBlz6iVj9atY6
@@ -153,7 +153,7 @@ EUEm/VHUnElNquzGyBA50TCfpv6NHPaTvOoB45yQbZ/YB4LO+CsT9eIMDZ4tcU9Z
 	return template(pem)
 }
 
-func testRsaPrivateKeyClear() string {
+func rsaPrivateKeyClear() string {
 	pem := `-----BEGIN RSA PRIVATE KEY-----
 MIICXgIBAAKBgQDXMLr/Y/vUtIFY75jj0YXfp6lQ7iEIbps3BvRE4isTpxs8fXLn
 LM8LAuJScxiKyrGnj8EMb7LIHkSMBlz6iVj9atY6EUEm/VHUnElNquzGyBA50TCf
@@ -172,7 +172,7 @@ eml4CZD2OGaxUqdOSHKBAkEAtruFjS0IhJstjoOrAS1p5ZAr8Noj5L1DEIgxfAD4
 	return template(pem)
 }
 
-func testRsaPrivateKeyEncrypted() string {
+func rsaPrivateKeyEncrypted() string {
 	pem := `-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: DES-EDE3-CBC,5E7604C0869B553B
@@ -194,7 +194,7 @@ p63k5DyefbWqosnWi+B8VkrZGr33OApBwMaS5yQzVyDg98f78pldQA==
 	return template(pem)
 }
 
-func testPassword() string {
+func privateKeyPassword() string {
 	value := "1234"
 	return fmt.Sprintf("\"%s\"", value)
 }
@@ -741,7 +741,7 @@ func TestParsePublicKey(t *testing.T) {
 		return
 	}
 	rt := makeRuntime()
-	rsa := testRsaPublicKey()
+	rsa := rsaPublicKey()
 
 	t.Run("Failure", func(t *testing.T) {
 		_, err := common.RunString(rt, `
@@ -770,9 +770,9 @@ func TestParsePrivateKey(t *testing.T) {
 		return
 	}
 	rt := makeRuntime()
-	password := testPassword()
-	rsaClear := testRsaPrivateKeyClear()
-	rsaEncrypted := testRsaPrivateKeyEncrypted()
+	password := privateKeyPassword()
+	rsaClear := rsaPrivateKeyClear()
+	rsaEncrypted := rsaPrivateKeyEncrypted()
 
 	t.Run("Failure", func(t *testing.T) {
 		_, err := common.RunString(rt, `
