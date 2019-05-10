@@ -44,7 +44,7 @@ type Material struct {
 	dsaCertificate         string
 	ecdsaCertificate       string
 	rsaCertificate         string
-	rsPublicKey            string
+	rsaPublicKey           string
 	privateKeyPassword     string
 	rsaPrivateKeyClear     string
 	rsaPrivateKeyEncrypted string
