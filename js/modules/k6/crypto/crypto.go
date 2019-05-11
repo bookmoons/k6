@@ -47,8 +47,19 @@ type Hasher struct {
 	hash hash.Hash
 }
 
+type Verifier struct{}
+
 func New() *Crypto {
 	return &Crypto{}
+}
+
+func (*Crypto) CreateVerify(ctx *context.Context) *Verifier {
+	return &Verifier{}
+}
+
+func (verifier *Verifier) Update(ctx *context.Context, data string) {
+	err := errors.New("could not decode data")
+	common.Throw(common.GetRuntime(*ctx), err)
 }
 
 func (*Crypto) RandomBytes(ctx context.Context, size int) []byte {

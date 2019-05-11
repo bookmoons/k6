@@ -38,6 +38,25 @@ func (MockReader) Read(p []byte) (n int, err error) {
 	return -1, errors.New("Contrived failure")
 }
 
+func TestVerifier(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+
+	rt := goja.New()
+	rt.SetFieldNameMapper(common.FieldNameMapper{})
+	ctx := context.Background()
+	ctx = common.WithRuntime(ctx, rt)
+	rt.Set("crypto", common.Bind(rt, New(), &ctx))
+
+	t.Run("UpdateFailure", func(t *testing.T) {
+		_, err := common.RunString(rt, `
+		const verifier = crypto.createVerify();
+		verifier.update("bad-data");`)
+		assert.EqualError(t, err, "GoError: could not decode data")
+	})
+}
+
 func TestCryptoAlgorithms(t *testing.T) {
 	if testing.Short() {
 		return
